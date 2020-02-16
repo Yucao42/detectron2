@@ -21,6 +21,8 @@ def setup_cfg(args):
     # load config from file and command-line arguments
     cfg = get_cfg()
     cfg.merge_from_file(args.config_file)
+    print(args.config_file)
+    print(f"cfg.MODEL.PROPOSAL_GENERATOR.NAME is {cfg.MODEL.PROPOSAL_GENERATOR.NAME}")
     cfg.merge_from_list(args.opts)
     # Set score_threshold for builtin models
     cfg.MODEL.RETINANET.SCORE_THRESH_TEST = args.confidence_threshold
@@ -34,7 +36,9 @@ def get_parser():
     parser = argparse.ArgumentParser(description="Detectron2 demo for builtin models")
     parser.add_argument(
         "--config-file",
-        default="configs/quick_schedules/mask_rcnn_R_50_FPN_inference_acc_test.yaml",
+        default="configs/quick_schedules/retinanet_R_50_FPN_inference_acc_test.yaml",
+        # default="configs/quick_schedules/fast_rcnn_R_50_FPN_inference_acc_test.yaml",
+        # default="configs/quick_schedules/mask_rcnn_R_50_FPN_inference_acc_test.yaml",
         metavar="FILE",
         help="path to config file",
     )
@@ -63,7 +67,7 @@ def get_parser():
 
 
 if __name__ == "__main__":
-    mp.set_start_method("spawn", force=True)
+    # mp.set_start_method("spawn", force=True)
     args = get_parser().parse_args()
     setup_logger(name="fvcore")
     logger = setup_logger()
@@ -124,17 +128,17 @@ if __name__ == "__main__":
                 output_fname = os.path.splitext(output_fname)[0] + ".mkv"
             else:
                 output_fname = args.output
-            assert not os.path.isfile(output_fname), output_fname
+            # assert not os.path.isfile(output_fname), output_fname
             output_file = cv2.VideoWriter(
                 filename=output_fname,
                 # some installation of opencv may not support x264 (due to its license),
                 # you can try other format (e.g. MPEG)
-                fourcc=cv2.VideoWriter_fourcc(*"x264"),
+                fourcc=cv2.VideoWriter_fourcc(*"mp4v"),
                 fps=float(frames_per_second),
                 frameSize=(width, height),
                 isColor=True,
             )
-        assert os.path.isfile(args.video_input)
+        # assert os.path.isfile(args.video_input)
         for vis_frame in tqdm.tqdm(demo.run_on_video(video), total=num_frames):
             if args.output:
                 output_file.write(vis_frame)

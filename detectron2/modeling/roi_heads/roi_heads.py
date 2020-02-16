@@ -620,6 +620,8 @@ class StandardROIHeads(ROIHeads):
         assert not self.training
         assert instances[0].has("pred_boxes") and instances[0].has("pred_classes")
         features_list = [features[f] for f in self.in_features]
+        # for features in features_list:
+        #     print("Feature size ", features.shape)
 
         instances = self._forward_mask(features_list, instances)
         instances = self._forward_keypoint(features_list, instances)

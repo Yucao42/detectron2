@@ -160,10 +160,11 @@ class GeneralizedRCNN(nn.Module):
         features = self.backbone(images.tensor)
 
         if detected_instances is None:
+            print(self.proposal_generator is None)
             if self.proposal_generator:
                 proposals, _ = self.proposal_generator(images, features, None)
             else:
-                assert "proposals" in batched_inputs[0]
+                # assert "proposals" in batched_inputs[0]
                 proposals = [x["proposals"].to(self.device) for x in batched_inputs]
 
             results, _ = self.roi_heads(images, features, proposals, None)

@@ -19,6 +19,7 @@ def build_proposal_generator(cfg, input_shape):
     """
     name = cfg.MODEL.PROPOSAL_GENERATOR.NAME
     if name == "PrecomputedProposals":
+        print("cfg.MODEL.PROPOSAL_GENERATOR.NAME is PrecomputedProposals")
         return None
 
     return PROPOSAL_GENERATOR_REGISTRY.get(name)(cfg, input_shape)
