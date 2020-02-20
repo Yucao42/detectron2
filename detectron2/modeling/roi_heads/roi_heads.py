@@ -628,7 +628,7 @@ class StandardROIHeads(ROIHeads):
         return instances
 
     def _forward_box(
-        self, features: List[torch.Tensor], proposals: List[Instances]
+        self, features: List[torch.Tensor], proposals: List[Instances], return_keep=False, score_thresh=None,
     ) -> Union[Dict[str, torch.Tensor], List[Instances]]:
         """
         Forward logic of the box prediction branch. If `self.train_on_pred_boxes is True`,
@@ -665,9 +665,15 @@ class StandardROIHeads(ROIHeads):
                         proposals_per_image.proposal_boxes = Boxes(pred_boxes_per_image)
             return outputs.losses()
         else:
-            pred_instances, _ = outputs.inference(
-                self.test_score_thresh, self.test_nms_thresh, self.test_detections_per_img
+            if not score_thresh:
+                score_thresh = self.test_score_thresh
+            pred_instances, keep = outputs.inference(
+                score_thresh, self.test_nms_thresh, self.test_detections_per_img
             )
+            # print(len(pred_instances[0]))
+
+            if return_keep:
+                return pred_instances, keep
             return pred_instances
 
     def _forward_mask(
