@@ -160,7 +160,7 @@ class GeneralizedRCNN(nn.Module):
         features = self.backbone(images.tensor)
 
         if detected_instances is None:
-            print(self.proposal_generator is None)
+            # print(self.proposal_generator is None)
             if self.proposal_generator:
                 proposals, _ = self.proposal_generator(images, features, None)
             else:
