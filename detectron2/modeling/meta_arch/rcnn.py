@@ -3,6 +3,7 @@ import logging
 import numpy as np
 import torch
 from torch import nn
+import time
 
 from detectron2.structures import ImageList
 from detectron2.utils.events import get_event_storage
@@ -52,7 +53,7 @@ class GeneralizedRCNN(nn.Module):
 
         Args:
             batched_inputs (list): a list that contains input to the model.
-            proposals (list): a list that contains predicted proposals. Both
+            proposals (list): a list that contains ppredicted proposals. Both
                 batched_inputs and proposals should have the same length.
         """
         from detectron2.utils.visualizer import Visualizer
@@ -137,7 +138,7 @@ class GeneralizedRCNN(nn.Module):
         losses.update(proposal_losses)
         return losses
 
-    def inference(self, batched_inputs, detected_instances=None, do_postprocess=True):
+    def inference(self, batched_inputs, detected_instances=None, do_postprocess=True, return_preprocessingtime=False):
         """
         Run inference on the given inputs.
 
@@ -156,7 +157,9 @@ class GeneralizedRCNN(nn.Module):
         """
         assert not self.training
 
+        start_time = time.time()
         images = self.preprocess_image(batched_inputs)
+        preprocessing_time = time.time() - start_time
         features = self.backbone(images.tensor)
 
         if detected_instances is None:
@@ -173,7 +176,10 @@ class GeneralizedRCNN(nn.Module):
             results = self.roi_heads.forward_with_given_boxes(features, detected_instances)
 
         if do_postprocess:
-            return GeneralizedRCNN._postprocess(results, batched_inputs, images.image_sizes)
+            if return_preprocessingtime:
+                return GeneralizedRCNN._postprocess(results, batched_inputs, images.image_sizes), preprocessing_time
+            else:
+                return GeneralizedRCNN._postprocess(results, batched_inputs, images.image_sizes)
         else:
             return results
 

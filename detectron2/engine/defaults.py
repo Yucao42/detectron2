@@ -20,6 +20,7 @@ from torch.nn.parallel import DistributedDataParallel
 
 import detectron2.data.transforms as T
 from detectron2.checkpoint import DetectionCheckpointer
+import time
 from detectron2.data import (
     MetadataCatalog,
     build_detection_test_loader,
@@ -173,7 +174,7 @@ class DefaultPredictor:
         self.input_format = cfg.INPUT.FORMAT
         assert self.input_format in ["RGB", "BGR"], self.input_format
 
-    def __call__(self, original_image):
+    def __call__(self, original_image, record_preprocessed_time=False):
         """
         Args:
             original_image (np.ndarray): an image of shape (H, W, C) (in BGR order).
@@ -184,6 +185,7 @@ class DefaultPredictor:
                 See :doc:`/tutorials/models` for details about the format.
         """
         with torch.no_grad():  # https://github.com/sphinx-doc/sphinx/issues/4258
+            start_time = time.time()
             # Apply pre-processing to image.
             if self.input_format == "RGB":
                 # whether the model expects BGR inputs or RGB
@@ -193,9 +195,17 @@ class DefaultPredictor:
             image = torch.as_tensor(image.astype("float32").transpose(2, 0, 1))
 
             inputs = {"image": image, "height": height, "width": width}
-            predictions = self.model([inputs])[0]
+            preprocessed_time = time.time() - start_time
+            if record_preprocessed_time:
+                predictions, preprocesstime = self.model.inference([inputs], return_preprocessingtime=True)
+                preprocessed_time += preprocesstime
+                predictions = predictions[0]
 
-            return predictions
+            if record_preprocessed_time:
+                return predictions, preprocessed_time
+            else:
+                return predictions
+
 
 
 class DefaultTrainer(SimpleTrainer):
