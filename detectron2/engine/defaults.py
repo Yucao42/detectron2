@@ -174,6 +174,42 @@ class DefaultPredictor:
         self.input_format = cfg.INPUT.FORMAT
         assert self.input_format in ["RGB", "BGR"], self.input_format
 
+    def run_on_images(self, images, record_preprocessed_time=False):
+        """
+        Args:
+            original_image (np.ndarray): an image of shape (H, W, C) (in BGR order).
+
+        Returns:
+            predictions (dict):
+                the output of the model for one image only.
+                See :doc:`/tutorials/models` for details about the format.
+        """
+        batched_inputs = []
+        start_time = time.time()
+        with torch.no_grad():  # https://github.com/sphinx-doc/sphinx/issues/4258
+            for original_image in images:
+                # Apply pre-processing to image.
+                if self.input_format == "RGB":
+                    # whether the model expects BGR inputs or RGB
+                    original_image = original_image[:, :, ::-1]
+                height, width = original_image.shape[:2]
+                image = self.transform_gen.get_transform(original_image).apply_image(original_image)
+                image = torch.as_tensor(image.astype("float32").transpose(2, 0, 1))
+
+                inputs = {"image": image, "height": height, "width": width}
+                batched_inputs.append(inputs)
+            preprocessed_time = time.time() - start_time
+            if record_preprocessed_time:
+                predictions, preprocesstime = self.model.forward([inputs], return_preprocessingtime=True)
+                preprocessed_time += preprocesstime
+
+            if record_preprocessed_time:
+                return predictions, preprocessed_time
+            else:
+                return predictions
+
+
+
     def __call__(self, original_image, record_preprocessed_time=False):
         """
         Args:
@@ -197,7 +233,7 @@ class DefaultPredictor:
             inputs = {"image": image, "height": height, "width": width}
             preprocessed_time = time.time() - start_time
             if record_preprocessed_time:
-                predictions, preprocesstime = self.model.inference([inputs], return_preprocessingtime=True)
+                predictions, preprocesstime = self.model.forward([inputs], return_preprocessingtime=True)
                 preprocessed_time += preprocesstime
                 predictions = predictions[0]
 
