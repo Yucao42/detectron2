@@ -200,7 +200,7 @@ class DefaultPredictor:
                 batched_inputs.append(inputs)
             preprocessed_time = time.time() - start_time
             if record_preprocessed_time:
-                predictions, preprocesstime = self.model.forward([inputs], return_preprocessingtime=True)
+                predictions, preprocesstime = self.model.forward(batched_inputs, return_preprocessingtime=True)
                 preprocessed_time += preprocesstime
 
             if record_preprocessed_time:
